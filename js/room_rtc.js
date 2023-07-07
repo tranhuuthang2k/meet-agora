@@ -1,8 +1,6 @@
 let APP_ID = "cbf669d591c6400fa04ebae1d3f590d0"
-
-
+// intialize agoria
 let uid = sessionStorage.getItem('uid')
-console.log(uid)
 if (!uid) {
     uid = String(Math.floor(Math.random() * 10000))
     sessionStorage.setItem('uid', uid)
@@ -14,6 +12,7 @@ let client;
 let rtmClient;
 let channel;
 
+// get params room id
 const queryString = window.location.search
 const urlParams = new URLSearchParams(queryString)
 let roomId = urlParams.get('room')
@@ -24,7 +23,7 @@ if (!roomId) {
 
 let displayName = sessionStorage.getItem('display_name')
 if (!displayName) {
-    window.location = 'lobby.html'
+    window.location = 'connect-room.html'
 }
 
 var localTracks = {
@@ -39,16 +38,12 @@ let sharingScreen = false;
 
 let joinRoomInit = async () => {
     rtmClient = await AgoraRTM.createInstance(APP_ID)
-    await rtmClient.login({ uid, token })
 
+    await rtmClient.login({ uid, token })
     await rtmClient.addOrUpdateLocalUserAttributes({ 'name': displayName })
 
     channel = await rtmClient.createChannel(roomId)
     await channel.join()
-
-    channel.on('MemberJoined', handleMemberJoined)
-    channel.on('MemberLeft', handleMemberLeft)
-    channel.on('ChannelMessage', handleChannelMessage)
 
     getMembers()
     addBotMessageToDom(`Welcome to the room ${displayName}! 👋`)
@@ -56,8 +51,8 @@ let joinRoomInit = async () => {
     client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
     await client.join(APP_ID, roomId, token, uid)
 
-    client.on('user-published', handleUserPublished)
-    client.on('user-left', handleUserLeft)
+    client.on('user-published', handleUserPublished) // watch user join meeting
+    client.on('user-left', handleUserLeft) // watch user out metting
 }
 
 let joinStream = async () => {
@@ -70,11 +65,10 @@ let joinStream = async () => {
             height: { min: 480, ideal: 1080, max: 1080 },
         }
     })
-
     let player = `<div class="video__container" id="user-container-${uid}">
                     <div class="video-player" id="user-${uid}"></div>
                     <span class="user-join-metting"> ${displayName} </span>
-                 </div>
+                  </div>
                  `
 
     document.getElementById('streams__container').insertAdjacentHTML('beforeend', player)
@@ -91,10 +85,10 @@ let switchToCamera = async () => {
                  </div>`
     displayFrame.insertAdjacentHTML('beforeend', player)
 
-    await localTracks[0].setMuted(true)
+    // await localTracks[0].setMuted(true) // video
     await localTracks[1].setMuted(true)
 
-    document.getElementById('mic-btn').classList.remove('active')
+    // document.getElementById('mic-btn').classList.remove('active')
     document.getElementById('screen-btn').classList.remove('active')
 
     localTracks[1].play(`user-${uid}`)
@@ -103,19 +97,14 @@ let switchToCamera = async () => {
 
 let handleUserPublished = async (user, mediaType) => {
     remoteUsers[user.uid] = user
-
     await client.subscribe(user, mediaType)
     let { name } = await getUserJoin(user.uid);
-
     let player = document.getElementById(`user-container-${user.uid}`)
     if (player === null) {
         player = `<div class="video__container" id="user-container-${user.uid}">
-                <div class="video-player" id="user-${user.uid}"></div>
-                <span class="user-join-metting"> ${name} </span>
-
-            </div>
-
-            `
+                    <div class="video-player" id="user-${user.uid}"></div>
+                    <span class="user-join-metting"> ${name} </span>
+                  </div> `
 
         document.getElementById('streams__container').insertAdjacentHTML('beforeend', player)
         document.getElementById(`user-container-${user.uid}`).addEventListener('click', expandVideoFrame)
@@ -172,16 +161,18 @@ let toggleMic = async (e) => {
 }
 
 let toggleCamera = async (e) => {
-    let button = e.currentTarget
-    if (localTracks[1].muted) {
-        await localTracks[1].setMuted(false)
-        button.classList.add('active')
+    let button = e.currentTarget;
 
+    if (localTracks[1].muted) {
+        await localTracks[1].setMuted(false);
+        button.classList.add('active');
     } else {
-        await localTracks[1].setMuted(true)
-        button.classList.remove('active')
+        await localTracks[1].setMuted(true);
+        button.classList.remove('active');
     }
-}
+};
+
+
 
 let toggleScreen = async (e) => {
     let screenButton = e.currentTarget
@@ -226,13 +217,17 @@ let toggleScreen = async (e) => {
                 videoFrames[i].style.width = '100px'
             }
         }
-
-
     } else {
         sharingScreen = false
         cameraButton.style.display = 'block'
         document.getElementById(`user-container-${uid}`).remove()
-        await client.unpublish([localScreenTracks])
+
+        if (localScreenTracks instanceof Array) {
+            await client.unpublish([localScreenTracks[1], localScreenTracks[0]])
+        } else {
+            await client.unpublish([localScreenTracks])
+        }
+
 
         switchToCamera()
     }

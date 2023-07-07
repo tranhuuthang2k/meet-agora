@@ -7,17 +7,16 @@ let handleMemberJoined = async (MemberId) => {
 
     let { name } = await rtmClient.getUserAttributesByKeys(MemberId, ['name'])
     addBotMessageToDom(`Welcome to the room ${name}! 👋`)
+
 }
 
 let addMemberToDom = async (MemberId) => {
     let { name } = await rtmClient.getUserAttributesByKeys(MemberId, ['name'])
-
     let membersWrapper = document.getElementById('member__list')
     let memberItem = `<div class="member__wrapper" id="member__${MemberId}__wrapper">
                         <span class="green__icon"></span>
                         <p class="member_name">${name}</p>
                     </div>`
-
     membersWrapper.insertAdjacentHTML('beforeend', memberItem)
 }
 
@@ -104,7 +103,7 @@ let addBotMessageToDom = (botMessage) => {
 
     let newMessage = `<div class="message__wrapper">
                         <div class="message__body__bot">
-                            <strong class="message__author__bot">🤖 Mumble Bot</strong>
+                            <strong class="message__author__bot">🤖 Room</strong>
                             <p class="message__text__bot">${botMessage}</p>
                         </div>
                     </div>`
