@@ -205,11 +205,11 @@ let toggleScreen = async (e) => {
 
         await client.unpublish([localTracks[1]])
         if (localScreenTracks instanceof Array) {
-            localScreenTracks[0].play(`user-${uid}`)
-            await client.publish([localScreenTracks[1], localScreenTracks[0]])
+            localScreenTracks[0].play(`user-${uid}`) // video
+            await client.publish([localScreenTracks[1], localScreenTracks[0]]) // [0] => video, [1] => audio
         } else {
             localScreenTracks.play(`user-${uid}`)
-            await client.publish([localScreenTracks])
+            await client.publish([localScreenTracks]) // only video not music
         }
 
         let videoFrames = document.getElementsByClassName('video__container')
