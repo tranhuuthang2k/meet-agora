@@ -45,6 +45,11 @@ let joinRoomInit = async () => {
     channel = await rtmClient.createChannel(roomId)
     await channel.join()
 
+    channel.on('MemberJoined', handleMemberJoined)
+    channel.on('MemberLeft', handleMemberLeft)
+    channel.on('ChannelMessage', handleChannelMessage)
+
+
     getMembers()
     addBotMessageToDom(`Welcome to the room ${displayName}! 👋`)
 
