@@ -186,8 +186,10 @@ let toggleScreen = async (e) => {
         cameraButton.style.display = 'none'
 
         localScreenTracks = await AgoraRTC.createScreenVideoTrack({
-            encoderConfig: "720p"
+            encoderConfig: 'auto',
+            optimizationMode: 'motion',
         }, 'auto')
+
 
         document.getElementById(`user-container-${uid}`).remove()
         displayFrame.style.display = 'block'
